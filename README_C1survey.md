@@ -4,7 +4,7 @@ This repository includes the Class 1 survey dataset and R Markdown code used
 to analyze it. The project is part of an exercise to practice working with
 real-world data in R Markdown.
 ## Files Included
-- `C1survey.csv`: Cleaned version of the Class 1 survey dataset
+- `C1survey.csv`: Cleaned version of the Class 1 survey dataset. C1 survey dataset contains 31 observations across 27 variables taken from this class.
 - `Class1_code.Rmd`: R script used to summarize and visualize the data
 - `README_C1survey.md`: This file
 ## What the Code Does
