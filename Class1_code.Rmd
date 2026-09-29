@@ -1,0 +1,199 @@
+---
+title: 'Lab: Class One Survey Analysis'
+output:
+  html_document:
+    
+---
+
+
+### **INSTRUCTIONS**
+####  **Complete all tasks 1-7 using reproducible coding practices (annotation of all code). Use R syntax to solve all problems (i.e. do not manually change values/variables in datasets or check them manually to make sure things are correct except as a double or triple check). Please cut and paste each problem before each R markdown chunk and annotate your code within the chunks.**
+
+
+**Install packages and open libraries**
+*Ella's notes, pacman is able to both install and load libraries for packages that you don't have for the former*
+
+```{r, chunk1, installing and loading packages}
+pacman::p_load(haven, readr, dplyr, openxlsx)
+```
+
+
+##### 1. Import class one survey data from our Github site (https://github.com/kijohnson/Advanced-Data-Analysis) (The dataset is called 'Class 1 Survey Fall 2026.csv'), calling the R dataframe that you create *C1survey*.
+
+```{r, chunk2, creating dataframe}
+C1survey <-
+  read_csv(
+    "https://github.com/kijohnson/Advanced-Data-Analysis/raw/refs/heads/main/Class%201%20Survey%20Fall%202026.csv"
+  )
+```
+
+##### 2. Determine: **a.** the number of observations (i.e. the number of people who filled out the survey) and **b.** the number of variables in the dataframe.    
+
+```{r, chunk3, characteristics of dataset}
+#a) determing the number of observations/number of rows
+nrow(C1survey)
+#answer is 31
+
+#b)determining th enumber of variables/number of columns
+ncol(C1survey)
+#answer is 27
+
+#another option is dim() which returns both number of rows and number of columns
+dim(C1survey)
+
+```
+
+```{r, chunk4, alt observations of the dataset}
+count(C1survey)
+
+#count is a dplyr fxn that shows number of observations
+```
+
+
+```{r, summary of variables}
+#sapply() returns the type of variable per column, FUN is the function to be applied, x is the vector it is to be applied to
+sapply(X = C1survey, FUN = typeof)
+
+#typeof() is a function of base R that returns the type of object
+typeof(C1survey$`Do you like cats?`)
+```
+
+
+##### 3. **a.** Rename the column variables to something shorter and that is descriptive of what the variable is about (for example *like_dogs* for the 'Do you like dogs?' question variable) and **b.** Display that they are renamed. **Hints**: You can use either the rename_with function or the names function. The list of names for time is:
+
+```{r, echo=TRUE}
+c("id", "like_cats", "like_dogs", "have_desert", "slogan", "fav_day", "larkORowl", "fav_food", "fav_drink", "fav_season", "fav_month", "hobby", "program", "specialization", "stat_software", "R_exp", "coding_comfort", "coding_length", "top_three", "public_health_interest", "fav_num", "bday", "bmonth", "country", "state", "city",  "highest_educ_level")
+```
+
+
+```{r}
+#renaming all 27 variables within the dataset 
+names(C1survey)[1:27] <- 
+  c("id", "like_cats", "like_dogs", "have_desert", "slogan", "fav_day", "larkORowl", "fav_food", "fav_drink", "fav_season", "fav_month", "hobby", "program", "specialization", "stat_software", "R_exp", "coding_comfort", "coding_length", "top_three", "public_health_interest", "fav_num", "bday", "bmonth", "country", "state", "city",  "highest_educ_level")
+
+#b) displaying that they are renamed:
+colnames(C1survey)
+
+#could also use 'names(C1survey)' to display 
+
+```
+
+##### 4. Write code to determine and display the number of factor, integer, numerical, and character variables there are in the *C1survey* dataset. **Suggestion**: Try to ask ChatGPT for a solution if you are unsure. There is a really short answer to this but we want to see what students come up with!
+```{r}
+n_factor    <- sum(sapply(C1survey, is.factor))
+n_integer   <- sum(sapply(C1survey, is.integer))
+n_numeric   <- sum(sapply(C1survey, function(x) is.numeric(x) && !is.integer(x)))
+n_character <- sum(sapply(C1survey, is.character))
+
+# Display the results
+cat("Factor variables:   ", n_factor,    "\n")
+cat("Integer variables:  ", n_integer,   "\n")
+cat("Numeric variables:  ", n_numeric,   "\n")
+cat("Character variables:", n_character, "\n")
+
+#used Claude SOnnet which returned this inelegant solution. Upon further sleuthing sapply (data,class) works here as above
+```
+
+##### 5. **a.** Using code, check the *bday* and *bmonth* variables for any unusual or missing values (**hint**: use table function). If you find any, **b.** describe what you will do with the unusual values in a comment before or immediately following the code that does it, and **c.** after you have cleaned up any unusual values, find the median bday and month. *Note: please make sure that your bday and month variables are numeric before doing statistics
+```{r}
+table(C1survey$bday)
+#Theres a value represented as '30-Nov' that I want to convert to only the day, 12. I also want to make sure it is not missing a value under the month. Tried to. use code but ended up just visually inspecting. In future can create a new data frame.
+
+#now, replacing 30-Nov with 30, and 29-Nov with 29
+
+C1survey$bday[C1survey$bday == "30-Nov"] <- 30
+C1survey$bday[C1survey$bday == "29-Nov"] <- 29
+
+#checking
+table(C1survey$bday)
+
+#checking birth month
+table(C1survey$bmonth)
+
+C1survey$bmonth[C1survey$bmonth == "February"] <- 2
+C1survey$bmonth[C1survey$bmonth == "March"] <- 3
+C1survey$bmonth[C1survey$bmonth == "May"] <- 5
+C1survey$bmonth[C1survey$bmonth == "November"] <-11
+
+#finding median bday and bmonth
+class(C1survey$bmonth)
+class(C1survey$bday)
+#converting to numeric, and finding median:
+median(as.numeric(C1survey$bmonth), na.rm = TRUE)
+median(as.numeric(C1survey$bday), na.rm = TRUE)
+
+#library(help=base)
+#environment(base)
+#Another way to do this...using case when, and removing na's
+
+
+
+```
+
+##### 6. **a.** Create a new variable called *bseason* that gives the season according to Northern Meteorological season in which respondents were born (winter = 12/1 to 2/29, spring = 3/1 to 5/31, summer = 6/1 to 8/31, fall = 9/1 to 11/30). **b**. Using the table function, print a table of Seasons in the columns and bmonths in the rows that allows you to check that the coding is correct **c**. Sum the columns using the addmargins function to answer the question of how many classmates were born in each season? Include your answer in the code. 
+```{r}
+C1survey$bmonth <- as.numeric(C1survey$bmonth)
+
+C1survey <- C1survey %>%
+  mutate(bseason = case_when(
+    bmonth %in% c(12, 1, 2, 02) ~ "winter",
+    bmonth %in% c(3,4,5) ~ "spring",
+    bmonth %in% c(6,7,8, 08) ~ "summer",
+    bmonth %in% c(9,10,11) ~ "fall"
+  ))
+
+
+#table of seasons in columns and bmonths in rows
+table(C1survey$bmonth, C1survey$bseason)
+tableseasons <- table(C1survey$bmonth, C1survey$bseason)
+addmargins(tableseasons, margin = 1)
+#  Sum   fall-15      spring-5      summer-5      winter-5
+```
+
+##### 7. Pick your favorite variable or variables to analyze, come up with a question you want to answer with that variable or variables, generate the code, and provide an answer to your question. Describe what you did using comments (i.e. #'s).
+
+```{r}
+#Look at the relationship between time of day preference (owl/lark/hummingbird) and favorite drink(coffee/soda/water/juice/matcha)
+
+table(C1survey$larkORowl)
+
+
+
+C1survey <- C1survey |>
+  mutate(favdrink = case_when(
+    fav_drink %in% c("Coffee","Iced latte") ~ "Coffee",
+    fav_drink %in% c("Sparkling water", "water", "Water", "sparkling water") ~ "Water",
+    fav_drink %in% c("Coke", "coke", "Anything Soda", "Soda", "Diet Coke", "Diet coke", "Fnta") ~ "Soda",
+    fav_drink %in% c("lemonade", "Strawberry Lemonade", "lemonade", "pineapple juice", "Apple Juice") ~ "Fruit Juice",
+    fav_drink %in% c("Milk", "Rose Milk", "Matcha") ~ "Milk and Teas"
+))
+na.omit(C1survey$favdrink)
+
+
+unique(C1survey$favdrink)
+
+table(C1survey$larkORowl, C1survey$favdrink)
+
+#chisq analysis
+
+chisq.test(table(C1survey$larkORowl, C1survey$favdrink))
+
+#data:  table(C1survey$larkORowl, C1survey$favdrink)
+#X-squared = 14.252, df = 8, p-value = 0.07543
+
+#small smaple size, fewer than 5 observations in some cells. fishers test:
+
+fisher.test(table(C1survey$larkORowl, C1survey$favdrink))
+#Fisher's Exact Test for Count Data
+
+#data:  table(C1survey$larkORowl, C1survey$favdrink)
+#p-value = 0.0267
+#alternative hypothesis: two.sided
+
+#fishers test here shows a statistically significant association between time of day preference and favorite drink
+```
+
+
+
+
+
